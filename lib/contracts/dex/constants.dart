@@ -32,3 +32,13 @@ enum DexVersion {
   v1,
   v2,
 }
+
+enum DexType {
+  CPI
+}
+
+extension DexTypeValue on DexType {
+  String get value => switch(this) {
+    DexType.CPI => "constant_product",
+  };
+}
