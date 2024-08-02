@@ -1,3 +1,4 @@
+import 'package:stonfi/contracts/contract.dart';
 import 'package:stonfi/contracts/dex/constants.dart';
 import 'package:tonutils/dataformat.dart';
 import 'package:tonutils/tonutils.dart';
@@ -14,7 +15,7 @@ class LpAccountGasConstant {
   });
 }
 
-class LpAccountV1 extends Contract {
+class LpAccountV1 extends StonfiContract {
   static DexVersion version = DexVersion.v1;
   static LpAccountGasConstant gasConstants = LpAccountGasConstant(
     refund: Nano.fromString('0.3'),
@@ -39,8 +40,7 @@ class LpAccountV1 extends Contract {
         .endCell();
   }
 
-  SenderArguments getRefundTxParams(
-    ContractProvider provider, {
+  SenderArguments getRefundTxParams({
     BigInt? gasAmount,
     BigInt? queryId,
   }) {
@@ -57,8 +57,7 @@ class LpAccountV1 extends Contract {
     BigInt? gasAmount,
     BigInt? queryId,
   }) async {
-    final txParams =
-        getRefundTxParams(provider, gasAmount: gasAmount, queryId: queryId);
+    final txParams = getRefundTxParams(gasAmount: gasAmount, queryId: queryId);
 
     return via.send(txParams);
   }
@@ -77,8 +76,7 @@ class LpAccountV1 extends Contract {
         .endCell();
   }
 
-  SenderArguments getDirectAddLiquidityTxParams(
-    ContractProvider provider, {
+  SenderArguments getDirectAddLiquidityTxParams({
     required BigInt amount0,
     required BigInt amount1,
     BigInt? minimumLpToMint,
@@ -107,7 +105,6 @@ class LpAccountV1 extends Contract {
     BigInt? gasAmount,
   }) async {
     final txParams = getDirectAddLiquidityTxParams(
-      provider,
       gasAmount: gasAmount,
       queryId: queryId,
       amount0: amount0,
@@ -148,13 +145,19 @@ class LpAccountV1 extends Contract {
     return via.send(txParams);
   }
 
-  getLpAccountData(ContractProvider provider) async {
-    final result = await provider.get("get_lp_account_data", []);
+  Future<
+      ({
+        InternalAddress userAddress,
+        InternalAddress poolAddress,
+        BigInt amount0,
+        BigInt amount1,
+      })> getLpAccountData() async {
+    final result = await stonfiProvider!.get("get_lp_account_data", []);
     return (
-      result.stack.readAddress(), // user address
-      result.stack.readAddress(), // pool address
-      result.stack.readBigInt(), // amount0
-      result.stack.readBigInt(), // amount1
+      userAddress: result.stack.readAddress(), // user address
+      poolAddress: result.stack.readAddress(), // pool address
+      amount0: result.stack.readBigInt(), // amount0
+      amount1: result.stack.readBigInt(), // amount1
     );
   }
 }

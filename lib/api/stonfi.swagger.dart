@@ -21,8 +21,8 @@ part 'stonfi.swagger.g.dart';
 // **************************************************************************
 
 @ChopperApi()
-abstract class Stonfi extends ChopperService {
-  static Stonfi create({
+abstract class StonfiApi extends ChopperService {
+  static StonfiApi create({
     ChopperClient? client,
     http.Client? httpClient,
     Authenticator? authenticator,

@@ -1,20 +1,20 @@
 import 'package:stonfi/contracts/dex/constants.dart';
 import 'package:stonfi/utils/create_jetton_transfer_message.dart';
-import 'package:tonutils/dataformat.dart';
-import 'package:tonutils/jetton.dart';
 import 'package:tonutils/tonutils.dart';
 
 class PtonV1 extends JettonMaster {
   static DexVersion version = DexVersion.v1;
+  static InternalAddress staticAddress =
+      InternalAddress.parse("EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez");
 
-  PtonV1({InternalAddress? address, required ContractProvider provider})
-      : super(
-            address ??
-                InternalAddress.parse(
-                    "EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez"),
-            provider);
+  PtonV1({InternalAddress? address})
+      : super(address ?? PtonV1.staticAddress) {
+    if (address != null) {
+      PtonV1.staticAddress = address;
+    }
+  }
 
-  Future<SenderArguments> getTonTransferTxParams(ContractProvider provider,
+  Future<SenderArguments> getTonTransferTxParams(
       {required BigInt tonAmount,
       required InternalAddress destinationAddress,
       required InternalAddress refundAddress,
@@ -36,14 +36,14 @@ class PtonV1 extends JettonMaster {
     return SenderArguments(value: value, to: to, body: body);
   }
 
-  sendTonTransfer(ContractProvider provider, Sender via,
+  sendTonTransfer(Sender via,
       {required BigInt tonAmount,
       required InternalAddress destinationAddress,
       required InternalAddress refundAddress,
       Cell? forwardPayload,
       BigInt? forwardTonAmount,
       BigInt? queryId}) async {
-    final txParams = await getTonTransferTxParams(provider,
+    final txParams = await getTonTransferTxParams(
         destinationAddress: destinationAddress,
         refundAddress: refundAddress,
         tonAmount: tonAmount,

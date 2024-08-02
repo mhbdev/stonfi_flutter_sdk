@@ -1,1 +1,1 @@
-export 'stonfi.swagger.dart' show Stonfi;
+export 'stonfi.swagger.dart' show StonfiApi;

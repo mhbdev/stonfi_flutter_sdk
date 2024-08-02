@@ -32,7 +32,7 @@ class PoolV1 extends JettonMaster {
         .endCell();
   }
 
-  SenderArguments getCollectFeeTxParams(ContractProvider provider, {
+  SenderArguments getCollectFeeTxParams({
     BigInt? gasAmount,
     BigInt? queryId,
   }) {
@@ -49,7 +49,7 @@ class PoolV1 extends JettonMaster {
         BigInt? queryId,
       }) async {
     final txParams =
-    getCollectFeeTxParams(provider, gasAmount: gasAmount, queryId: queryId);
+    getCollectFeeTxParams(gasAmount: gasAmount, queryId: queryId);
 
     return via.send(txParams);
   }

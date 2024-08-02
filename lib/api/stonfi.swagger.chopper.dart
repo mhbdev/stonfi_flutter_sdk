@@ -8,14 +8,14 @@ part of 'stonfi.swagger.dart';
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
-final class _$Stonfi extends Stonfi {
+final class _$Stonfi extends StonfiApi {
   _$Stonfi([ChopperClient? client]) {
     if (client == null) return;
     this.client = client;
   }
 
   @override
-  final Type definitionType = Stonfi;
+  final Type definitionType = StonfiApi;
 
   @override
   Future<Response<List<Object>>> _exportCmcV1Get() {

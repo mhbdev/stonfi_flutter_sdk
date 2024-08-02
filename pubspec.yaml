@@ -1,8 +1,6 @@
 name: stonfi
 description: "Stonfi Swap Flutter Sdk."
 version: 0.0.1
-homepage:
-publish_to: "https://pub.dev"
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -25,6 +23,8 @@ dev_dependencies:
   chopper_generator: ^6.0.0
   json_serializable: ^6.6.1
   swagger_dart_code_generator: ^2.10.4
+  test: any
+  mocktail: ^1.0.4
 
 dependency_overrides:
   build_runner: ^2.4.9

@@ -1,10 +1,8 @@
-import 'dart:io';
-
-import 'package:chopper/chopper.dart';
+import 'package:stonfi/contracts/contract.dart';
+import 'package:stonfi/contracts/contract_provider.dart';
 import 'package:stonfi/contracts/dex/v1/pool_v1.dart';
 import 'package:stonfi/contracts/pTON/v1/pton_v1.dart';
 import 'package:stonfi/utils/create_jetton_transfer_message.dart';
-import 'package:tonutils/dataformat.dart';
 import 'package:tonutils/tonutils.dart';
 
 import '../constants.dart';
@@ -31,7 +29,7 @@ class RouterGasConstants {
       required this.provideLpTon});
 }
 
-class RouterV1 extends Contract {
+class RouterV1 extends StonfiContract {
   static DexVersion version = DexVersion.v1;
   static RouterGasConstants gasConstants = RouterGasConstants(
     swapJettonToJetton: GasPair(
@@ -84,8 +82,7 @@ class RouterV1 extends Contract {
     return builder.endCell();
   }
 
-  Future<SenderArguments> getSwapJettonToJettonTxParams(
-    ContractProvider provider, {
+  Future<SenderArguments> getSwapJettonToJettonTxParams({
     required InternalAddress userWalletAddress,
     required InternalAddress offerJettonAddress,
     required InternalAddress askJettonAddress,
@@ -96,12 +93,12 @@ class RouterV1 extends Contract {
     BigInt? forwardGasAmount,
     BigInt? queryId,
   }) async {
-    final offerJettonWalletAddress =
-        await JettonMaster(offerJettonAddress, provider)
-            .getWalletAddress(userWalletAddress);
-    final askJettonWalletAddress =
-        await JettonMaster(askJettonAddress, provider)
-            .getWalletAddress(this.address);
+    final offerJettonWalletAddress = await stonfiProvider!
+        .open(JettonMaster(offerJettonAddress, provider))
+        .getWalletAddress(userWalletAddress);
+    final askJettonWalletAddress = await stonfiProvider!
+        .open(JettonMaster(askJettonAddress, provider))
+        .getWalletAddress(this.address);
 
     final forwardPayload = createSwapBody(
       userWalletAddress: userWalletAddress,
@@ -130,7 +127,6 @@ class RouterV1 extends Contract {
   }
 
   Future<void> sendSwapJettonToJetton(
-    ContractProvider provider,
     Sender via, {
     required InternalAddress userWalletAddress,
     required InternalAddress offerJettonAddress,
@@ -143,7 +139,6 @@ class RouterV1 extends Contract {
     BigInt? queryId,
   }) async {
     return via.send(await getSwapJettonToJettonTxParams(
-      provider,
       askJettonAddress: askJettonAddress,
       minAskAmount: minAskAmount,
       offerAmount: offerAmount,
@@ -156,7 +151,7 @@ class RouterV1 extends Contract {
     ));
   }
 
-  Future<SenderArguments> getSwapJettonToTonTxParams(ContractProvider provider,
+  Future<SenderArguments> getSwapJettonToTonTxParams(
       {required InternalAddress userWalletAddress,
       required InternalAddress offerJettonAddress,
       required PtonV1 proxyTon,
@@ -166,7 +161,7 @@ class RouterV1 extends Contract {
       BigInt? gasAmount,
       BigInt? forwardGasAmount,
       BigInt? queryId}) async {
-    return await getSwapJettonToJettonTxParams(provider,
+    return await getSwapJettonToJettonTxParams(
         askJettonAddress: proxyTon.address,
         gasAmount: gasAmount ?? gasConstants.swapJettonToTon.gasAmount,
         forwardGasAmount:
@@ -190,7 +185,6 @@ class RouterV1 extends Contract {
       BigInt? forwardGasAmount,
       BigInt? queryId}) async {
     return via.send(await getSwapJettonToTonTxParams(
-      provider,
       proxyTon: proxyTon,
       minAskAmount: minAskAmount,
       offerAmount: offerAmount,
@@ -203,8 +197,7 @@ class RouterV1 extends Contract {
     ));
   }
 
-  Future<SenderArguments> getSwapTonToJettonTxParams(
-    ContractProvider provider, {
+  Future<SenderArguments> getSwapTonToJettonTxParams({
     required InternalAddress userWalletAddress,
     required PtonV1 proxyTon,
     required InternalAddress askJettonAddress,
@@ -215,9 +208,9 @@ class RouterV1 extends Contract {
     BigInt? forwardGasAmount,
     BigInt? queryId,
   }) async {
-    final askJettonWalletAddress =
-        await JettonMaster(askJettonAddress, provider)
-            .getWalletAddress(this.address);
+    final askJettonWalletAddress = await stonfiProvider!
+        .open(JettonMaster(askJettonAddress))
+        .getWalletAddress(this.address);
 
     final forwardPayload = createSwapBody(
       userWalletAddress: userWalletAddress,
@@ -230,7 +223,6 @@ class RouterV1 extends Contract {
         forwardGasAmount ?? gasConstants.swapTonToJetton.forwardGasAmount;
 
     return await proxyTon.getTonTransferTxParams(
-      provider,
       queryId: queryId ?? BigInt.zero,
       tonAmount: offerAmount,
       destinationAddress: this.address,
@@ -241,7 +233,7 @@ class RouterV1 extends Contract {
   }
 
   Future<void> sendSwapTonToJetton(
-    ContractProvider provider,
+    StonfiContractProvider provider,
     Sender via, {
     required InternalAddress userWalletAddress,
     required PtonV1 proxyTon,
@@ -253,7 +245,7 @@ class RouterV1 extends Contract {
     BigInt? forwardGasAmount,
     BigInt? queryId,
   }) async {
-    return via.send(await getSwapTonToJettonTxParams(provider,
+    return via.send(await getSwapTonToJettonTxParams(
         minAskAmount: minAskAmount,
         offerAmount: offerAmount,
         userWalletAddress: userWalletAddress,
@@ -276,8 +268,7 @@ class RouterV1 extends Contract {
         .endCell();
   }
 
-  Future<SenderArguments> getProvideLiquidityJettonTxParams(
-    ContractProvider provider, {
+  Future<SenderArguments> getProvideLiquidityJettonTxParams({
     required InternalAddress userWalletAddress,
     required InternalAddress sendTokenAddress,
     required InternalAddress otherTokenAddress,
@@ -287,9 +278,11 @@ class RouterV1 extends Contract {
     BigInt? forwardGasAmount,
     BigInt? queryId,
   }) async {
-    final jettonWalletAddress = await JettonMaster(sendTokenAddress, provider)
+    final jettonWalletAddress = await stonfiProvider!
+        .open(JettonMaster(sendTokenAddress))
         .getWalletAddress(userWalletAddress);
-    final routerWalletAddress = await JettonMaster(otherTokenAddress, provider)
+    final routerWalletAddress = await stonfiProvider!
+        .open(JettonMaster(otherTokenAddress))
         .getWalletAddress(this.address);
 
     final forwardPayload = createProvideLiquidityBody(
@@ -326,7 +319,7 @@ class RouterV1 extends Contract {
     BigInt? forwardGasAmount,
     BigInt? queryId,
   }) async {
-    final txParams = await getProvideLiquidityJettonTxParams(provider,
+    final txParams = await getProvideLiquidityJettonTxParams(
         userWalletAddress: userWalletAddress,
         minLpOut: minLpOut,
         otherTokenAddress: otherTokenAddress,
@@ -338,8 +331,7 @@ class RouterV1 extends Contract {
     return via.send(txParams);
   }
 
-  Future<SenderArguments> getProvideLiquidityTonTxParams(
-    ContractProvider provider, {
+  Future<SenderArguments> getProvideLiquidityTonTxParams({
     required InternalAddress userWalletAddress,
     required PtonV1 proxyTon,
     required InternalAddress otherTokenAddress,
@@ -348,7 +340,8 @@ class RouterV1 extends Contract {
     BigInt? forwardGasAmount,
     BigInt? queryId,
   }) async {
-    final routerWalletAddress = await JettonMaster(otherTokenAddress, provider)
+    final routerWalletAddress = await stonfiProvider!
+        .open(JettonMaster(otherTokenAddress))
         .getWalletAddress(this.address);
 
     final forwardPayload = createProvideLiquidityBody(
@@ -360,7 +353,6 @@ class RouterV1 extends Contract {
         forwardGasAmount ?? gasConstants.provideLpTon.forwardGasAmount;
 
     return await proxyTon.getTonTransferTxParams(
-      provider,
       queryId: queryId ?? BigInt.zero,
       tonAmount: sendAmount,
       destinationAddress: this.address,
@@ -382,7 +374,6 @@ class RouterV1 extends Contract {
     BigInt? queryId,
   }) async {
     final txParams = await getProvideLiquidityTonTxParams(
-      provider,
       sendAmount: sendAmount,
       otherTokenAddress: otherTokenAddress,
       minLpOut: minLpOut,
@@ -394,12 +385,11 @@ class RouterV1 extends Contract {
     return via.send(txParams);
   }
 
-  Future<InternalAddress> getPoolAddress(
-    ContractProvider provider, {
+  Future<InternalAddress> getPoolAddress({
     required InternalAddress token0,
     required InternalAddress token1,
   }) async {
-    final result = await provider.get("get_pool_address", [
+    final result = await stonfiProvider!.get("get_pool_address", [
       TiSlice(beginCell().storeAddress(token0).endCell()),
       TiSlice(beginCell().storeAddress(token1).endCell()),
     ]);
@@ -407,38 +397,46 @@ class RouterV1 extends Contract {
     return result.stack.readAddress();
   }
 
-  Future<InternalAddress> getPoolAddressByJettonMinters(
-    ContractProvider provider, {
+  Future<InternalAddress> getPoolAddressByJettonMinters({
     required InternalAddress token0,
     required InternalAddress token1,
   }) async {
-    final jetton0WalletAddress =
-        await JettonMaster(token0, provider).getWalletAddress(this.address);
-    final jetton1WalletAddress =
-        await JettonMaster(token1, provider).getWalletAddress(this.address);
+    final jetton0WalletAddress = await stonfiProvider!
+        .open(JettonMaster(token0, provider))
+        .getWalletAddress(this.address);
+    final jetton1WalletAddress = await stonfiProvider!
+        .open(JettonMaster(token1, provider))
+        .getWalletAddress(this.address);
 
-    return getPoolAddress(provider,
+    return getPoolAddress(
         token0: jetton0WalletAddress, token1: jetton1WalletAddress);
   }
 
-  Future<PoolV1> getPool(
-    ContractProvider provider, {
+  Future<PoolV1> getPool({
     required InternalAddress token0,
     required InternalAddress token1,
   }) async {
-    return PoolV1(await getPoolAddressByJettonMinters(provider,
-        token0: token0, token1: token1));
+    return PoolV1(
+        await getPoolAddressByJettonMinters(token0: token0, token1: token1));
   }
 
-  Future getRouterData(ContractProvider provider) async {
-    final result = await provider.get("get_router_data", []);
+  Future<
+      ({
+        bool isLocked,
+        InternalAddress adminAddress,
+        Cell tempUpgrade,
+        Cell poolCode,
+        Cell jettonLpWalletCode,
+        Cell lpAccountCode,
+      })> getRouterData() async {
+    final result = await stonfiProvider!.get("get_router_data", []);
     return (
-      result.stack.readBool(), //isLocked
-      result.stack.readAddress(), //adminAddress
-      result.stack.readCell(), // tempUpgrade
-      result.stack.readCell(), //poolCode
-      result.stack.readCell(), //jettonLpWalletCode
-      result.stack.readCell(), //lpAccountCode
+      isLocked: result.stack.readBool(), //isLocked
+      adminAddress: result.stack.readAddress(), //adminAddress
+      tempUpgrade: result.stack.readCell(), // tempUpgrade
+      poolCode: result.stack.readCell(), //poolCode
+      jettonLpWalletCode: result.stack.readCell(), //jettonLpWalletCode
+      lpAccountCode: result.stack.readCell(), //lpAccountCode
     );
   }
 }
