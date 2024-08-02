@@ -43,13 +43,14 @@ class PoolV1 extends JettonMaster {
     return SenderArguments(to: to, value: value, body: body);
   }
 
-  Future<void> sendCollectFees(ContractProvider provider,
-      Sender via, {
-        BigInt? gasAmount,
-        BigInt? queryId,
-      }) async {
+  Future<void> sendCollectFees(
+    ContractProvider provider,
+    Sender via, {
+    BigInt? gasAmount,
+    BigInt? queryId,
+  }) async {
     final txParams =
-    getCollectFeeTxParams(gasAmount: gasAmount, queryId: queryId);
+        getCollectFeeTxParams(gasAmount: gasAmount, queryId: queryId);
 
     return via.send(txParams);
   }
@@ -67,7 +68,7 @@ class PoolV1 extends JettonMaster {
         .endCell();
   }
 
-  Future<SenderArguments> getBurnTxParams(ContractProvider provider, {
+  Future<SenderArguments> getBurnTxParams({
     required InternalAddress responseAddress,
     required BigInt amount,
     BigInt? gasAmount,
@@ -84,14 +85,14 @@ class PoolV1 extends JettonMaster {
     return SenderArguments(to: to, value: value, body: body);
   }
 
-  Future<void> sendBurn(ContractProvider provider,
-      Sender via, {
-        required InternalAddress responseAddress,
-        required BigInt amount,
-        BigInt? gasAmount,
-        BigInt? queryId,
-      }) async {
-    final txParams = await getBurnTxParams(provider,
+  Future<void> sendBurn(
+    Sender via, {
+    required InternalAddress responseAddress,
+    required BigInt amount,
+    BigInt? gasAmount,
+    BigInt? queryId,
+  }) async {
+    final txParams = await getBurnTxParams(
         amount: amount,
         responseAddress: responseAddress,
         gasAmount: gasAmount,
@@ -107,35 +108,36 @@ class PoolV1 extends JettonMaster {
       TiSlice(beginCell().storeAddress(jettonWallet).endCell()),
     ]);
     return (
-    result.stack.readBigInt(), // jettonToReceive
-    result.stack.readBigInt(), // protocolFeePaid
-    result.stack.readBigInt() // refFeePaid
+      result.stack.readBigInt(), // jettonToReceive
+      result.stack.readBigInt(), // protocolFeePaid
+      result.stack.readBigInt() // refFeePaid
     );
   }
 
-  Future<BigInt> getExpectedTokens(ContractProvider provider,
+  Future<BigInt> getExpectedTokens(
       {required BigInt amount0, required BigInt amount1}) async {
-    final result = await provider.get("get_expected_tokens", [
+    final result = await provider!.get("get_expected_tokens", [
       TiInt(amount0),
       TiInt(amount1),
     ]);
     return result.stack.readBigInt();
   }
 
-  Future<(BigInt, BigInt)> getExpectedLiquidity(ContractProvider provider,
+  Future<({BigInt amount0, BigInt amount1})> getExpectedLiquidity(
       {required BigInt jettonAmount}) async {
-    final result = await provider.get("get_expected_liquidity", [
+    final result = await provider!.get("get_expected_liquidity", [
       TiInt(jettonAmount),
     ]);
-    return (result.stack.readBigInt(), result.stack.readBigInt());
+    return (
+      amount0: result.stack.readBigInt(),
+      amount1: result.stack.readBigInt()
+    );
   }
 
-  Future<InternalAddress> getLpAccountAddress(ContractProvider provider,
+  Future<InternalAddress> getLpAccountAddress(
       {required InternalAddress ownerAddress}) async {
-    final result = await provider.get("get_expected_liquidity", [
-      TiSlice(beginCell()
-          .storeAddress(ownerAddress)
-          .endCell()),
+    final result = await provider!.get("get_expected_liquidity", [
+      TiSlice(beginCell().storeAddress(ownerAddress).endCell()),
     ]);
     return result.stack.readAddress();
   }
@@ -146,25 +148,40 @@ class PoolV1 extends JettonMaster {
     return JettonWallet.create(jettonWalletAddress);
   }
 
-  Future getPoolData(ContractProvider provider) async {
-    final result = await provider.get("get_pool_data", []);
-    return (result.stack.readBigInt(), //reserve0
-    result.stack.readBigInt(), // reserve1
-    result.stack.readAddress(), // token0WalletAddress
-    result.stack.readAddress(), // token1WalletAddress
-    result.stack.readBigInt(), // lpFee
-    result.stack.readBigInt(), //protocolFee
-    result.stack.readBigInt(), //refFee
-    result.stack.readAddress(), //protocolFeeAddress
-    result.stack.readBigInt(), //collectedToken0ProtocolFee
-    result.stack.readBigInt() // collectedToken1ProtocolFee
+  Future<
+      ({
+        BigInt reserve0,
+        BigInt reserve1,
+        InternalAddress token0WalletAddress,
+        InternalAddress token1WalletAddress,
+        BigInt lpFee,
+        BigInt protocolFee,
+        BigInt refFee,
+        InternalAddress protocolFeeAddress,
+        BigInt collectedToken0ProtocolFee,
+        BigInt collectedToken1ProtocolFee,
+      })> getPoolData() async {
+    final result = await provider!.get("get_pool_data", []);
+    return (
+      reserve0: result.stack.readBigInt(), //reserve0
+      reserve1: result.stack.readBigInt(), // reserve1
+      token0WalletAddress: result.stack.readAddress(), // token0WalletAddress
+      token1WalletAddress: result.stack.readAddress(), // token1WalletAddress
+      lpFee: result.stack.readBigInt(), // lpFee
+      protocolFee: result.stack.readBigInt(), //protocolFee
+      refFee: result.stack.readBigInt(), //refFee
+      protocolFeeAddress: result.stack.readAddress(), //protocolFeeAddress
+      collectedToken0ProtocolFee:
+          result.stack.readBigInt(), //collectedToken0ProtocolFee
+      collectedToken1ProtocolFee:
+          result.stack.readBigInt() // collectedToken1ProtocolFee
     );
   }
 
   Future<LpAccountV1> getLpAccount(ContractProvider provider,
       {required InternalAddress ownerAddress}) async {
-    final lpAccountAddress = await getLpAccountAddress(provider, ownerAddress: ownerAddress);
+    final lpAccountAddress =
+        await getLpAccountAddress(ownerAddress: ownerAddress);
     return LpAccountV1.create(lpAccountAddress);
   }
-
 }
