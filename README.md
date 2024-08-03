@@ -11,7 +11,7 @@ The SDK is written in Dart and designed to be a thin wrapper on top of the [STON
 
 ```yaml
 dependencies:
-  candlesticks: ^latest
+  stonfi: ^latest
 ```
 
 2. Get the package using your IDE's GUI or via command line with

@@ -1,4 +1,4 @@
-## 0.0.3
+## 0.0.4
 
 * Written some tests to demonstrate working state
 * Added a simple example
