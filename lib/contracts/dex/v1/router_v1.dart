@@ -416,8 +416,7 @@ class RouterV1 extends StonfiContract {
     required InternalAddress token0,
     required InternalAddress token1,
   }) async {
-    return PoolV1(
-        await getPoolAddressByJettonMinters(token0: token0, token1: token1));
+    return PoolV1(await getPoolAddressByJettonMinters(token0: token0, token1: token1));
   }
 
   Future<
