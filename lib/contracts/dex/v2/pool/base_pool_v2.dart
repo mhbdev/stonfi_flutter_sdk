@@ -1,5 +1,6 @@
-import 'package:flutter/foundation.dart';
-import 'package:stonfi/contracts/dex/v2/lp_account_v2.dart';
+import 'dart:convert';
+
+import 'package:stonfi/contracts/dex/v2/lp_account/lp_account_v2.dart';
 import 'package:tonutils/dataformat.dart';
 import 'package:tonutils/jetton.dart';
 
@@ -125,7 +126,7 @@ class BasePoolV2 extends JettonMaster {
 
   Future<DexType> getPoolType() async {
     final result = await provider!.get('get_pool_type', []);
-    return DexType.values.firstWhere((e) => e == result.stack.readString());
+    return DexType.values.firstWhere((e) => e.value == String.fromCharCodes((result.stack.readString().toString().replaceAll('[', '').replaceAll(']', '')).split(',').map((e) => int.parse(e.trim()))));
   }
 
   Future<(BigInt, BigInt, BigInt)> getExpectedOutputs(ContractProvider provider,
