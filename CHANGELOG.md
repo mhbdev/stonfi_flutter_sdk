@@ -1,3 +1,8 @@
+## 0.0.3
+
+* Written some tests to demonstrate working state
+* Added a simple example
+
 ## 0.0.2
 
 * Fixing issues with ContractProvider
