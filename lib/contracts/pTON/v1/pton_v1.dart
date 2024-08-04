@@ -1,19 +1,20 @@
 import 'package:stonfi/contracts/pTON/constants.dart';
+import 'package:stonfi/contracts/pTON/pton.dart';
 import 'package:stonfi/utils/create_jetton_transfer_message.dart';
 import 'package:tonutils/tonutils.dart';
 
-class PtonV1 extends JettonMaster {
+class PtonV1 extends Pton {
   static PtonVersion version = PtonVersion.v1;
   static InternalAddress staticAddress =
       InternalAddress.parse("EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez");
 
-  PtonV1({InternalAddress? address})
-      : super(address ?? PtonV1.staticAddress) {
+  PtonV1({InternalAddress? address}) : super(address ?? PtonV1.staticAddress) {
     if (address != null) {
       PtonV1.staticAddress = address;
     }
   }
 
+  @override
   Future<SenderArguments> getTonTransferTxParams(
       {required BigInt tonAmount,
       required InternalAddress destinationAddress,
@@ -36,7 +37,8 @@ class PtonV1 extends JettonMaster {
     return SenderArguments(value: value, to: to, body: body);
   }
 
-  sendTonTransfer(Sender via,
+  @override
+  Future<void> sendTonTransfer(Sender via,
       {required BigInt tonAmount,
       required InternalAddress destinationAddress,
       required InternalAddress refundAddress,

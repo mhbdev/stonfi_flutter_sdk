@@ -1,6 +1,7 @@
 import 'package:stonfi/contracts/contract.dart';
 import 'package:stonfi/contracts/dex/v2/pool/pool_v2.dart';
-import 'package:stonfi/contracts/pTON/v2/pton_v2.dart';
+import 'package:stonfi/contracts/dex/v2/vault/vault_v2.dart';
+import 'package:stonfi/contracts/pTON/pton.dart';
 import 'package:stonfi/utils/create_jetton_transfer_message.dart';
 import 'package:tonutils/tonutils.dart';
 
@@ -201,7 +202,7 @@ class BaseRouterV2 extends StonfiContract {
   Future<SenderArguments> getSwapJettonToTonTxParams({
     required InternalAddress userWalletAddress,
     required InternalAddress offerJettonAddress,
-    required PtonV2 proxyTon,
+    required Pton proxyTon,
     required BigInt offerAmount,
     required BigInt minAskAmount,
     InternalAddress? refundAddress,
@@ -239,7 +240,7 @@ class BaseRouterV2 extends StonfiContract {
 
   Future<SenderArguments> getSwapTonToJettonTxParams({
     required InternalAddress userWalletAddress,
-    required PtonV2 proxyTon,
+    required Pton proxyTon,
     required InternalAddress askJettonAddress,
     required BigInt offerAmount,
     required BigInt minAskAmount,
@@ -455,7 +456,7 @@ class BaseRouterV2 extends StonfiContract {
 
   Future<SenderArguments> implGetProvideLiquidityTonTxParams({
     required InternalAddress userWalletAddress,
-    required PtonV2 proxyTon,
+    required Pton proxyTon,
     required InternalAddress otherTokenAddress,
     required BigInt sendAmount,
     required BigInt minLpOut,
@@ -498,7 +499,7 @@ class BaseRouterV2 extends StonfiContract {
 
   Future<SenderArguments> getProvideLiquidityTonTxParams({
     required InternalAddress userWalletAddress,
-    required PtonV2 proxyTon,
+    required Pton proxyTon,
     required InternalAddress otherTokenAddress,
     required BigInt sendAmount,
     required BigInt minLpOut,
@@ -529,7 +530,7 @@ class BaseRouterV2 extends StonfiContract {
 
   Future<SenderArguments> getSingleSideProvideLiquidityTonTxParams({
     required InternalAddress userWalletAddress,
-    required PtonV2 proxyTon,
+    required Pton proxyTon,
     required InternalAddress otherTokenAddress,
     required BigInt sendAmount,
     required BigInt minLpOut,
@@ -605,14 +606,13 @@ class BaseRouterV2 extends StonfiContract {
     return result.stack.readAddress();
   }
 
-  // TODO : vault implementation
-  // Future<PoolV1> getVault({
-  //   required InternalAddress token0,
-  //   required InternalAddress token1,
-  // }) async {
-  //   return PoolV1(
-  //       await getPoolAddressByJettonMinters(token0: token0, token1: token1));
-  // }
+  Future<VaultV2> getVault({
+    required InternalAddress user,
+    required InternalAddress tokenWallet,
+  }) async {
+    return VaultV2(
+        await getVaultAddress(user: user, tokenWallet: tokenWallet));
+  }
 
   Future<({int major, int minor, String development})>
       getRouterVersion() async {
@@ -621,7 +621,7 @@ class BaseRouterV2 extends StonfiContract {
     return (
       major: result.stack.readInt(),
       minor: result.stack.readInt(),
-      development: result.stack.readString() as String,
+      development: String.fromCharCodes((result.stack.readString().toString().replaceAll('[', '').replaceAll(']', '')).split(',').map((e) => int.parse(e.trim()))),
     );
   }
 
@@ -640,7 +640,7 @@ class BaseRouterV2 extends StonfiContract {
     return (
       routerId: result.stack.readInt(),
       dexType: DexType.values
-          .firstWhere((e) => (result.stack.readString() as String) == e.value),
+          .firstWhere((e) => (String.fromCharCodes((result.stack.readString().toString().replaceAll('[', '').replaceAll(']', '')).split(',').map((e) => int.parse(e.trim())))) == e.value),
       isLocked: result.stack.readBool(),
       adminAddress: result.stack.readAddress(),
       tempUpgrade: result.stack.readCell(),
