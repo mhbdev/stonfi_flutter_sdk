@@ -5,9 +5,11 @@ import 'package:tonutils/tonutils.dart';
 
 class PtonGasConstant {
   final BigInt tonTransfer;
+  final BigInt deployWallet;
 
   PtonGasConstant({
     required this.tonTransfer,
+    required this.deployWallet,
   });
 }
 
@@ -16,8 +18,8 @@ class PtonV2 extends PtonV1 {
   static InternalAddress staticAddress =
       InternalAddress.parse("EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez");
   static PtonGasConstant gasConstants = PtonGasConstant(
-    tonTransfer: Nano.fromString('0.01'),
-  );
+      tonTransfer: Nano.fromString('0.01'),
+      deployWallet: Nano.fromString('0.1'));
 
   PtonV2({super.address, PtonGasConstant? gasConstants}) {
     PtonV2.gasConstants = gasConstants ?? PtonV2.gasConstants;
@@ -59,7 +61,9 @@ class PtonV2 extends PtonV1 {
       queryId: queryId,
     );
 
-    final value = tonAmount + (forwardTonAmount ?? BigInt.zero) + gasConstants.tonTransfer;
+    final value = tonAmount +
+        (forwardTonAmount ?? BigInt.zero) +
+        gasConstants.tonTransfer;
 
     return SenderArguments(value: value, to: to, body: body);
   }
@@ -80,5 +84,39 @@ class PtonV2 extends PtonV1 {
         forwardPayload: forwardPayload,
         forwardTonAmount: forwardTonAmount);
     return via.send(txParams);
+  }
+
+  @override
+  Cell createDeployWalletBody({
+    required InternalAddress ownerAddress,
+    InternalAddress? excessAddress,
+    BigInt? queryId,
+  }) {
+    return beginCell()
+        .storeUint(PtonOpCodes.DEPLOY_WALLET_V2.op, 32)
+        .storeUint(queryId ?? BigInt.zero, 64)
+        .storeAddress(ownerAddress)
+        .storeAddress(excessAddress)
+        .endCell();
+  }
+
+  @override
+  Future<SenderArguments> getDeployWalletTxParams(
+      {required InternalAddress ownerAddress,
+      InternalAddress? excessAddress,
+      BigInt? gasAmount,
+      BigInt? queryId}) async {
+
+    final to = this.address;
+
+    final body = createDeployWalletBody(
+      ownerAddress: ownerAddress,
+      excessAddress: excessAddress ?? ownerAddress,
+      queryId: queryId,
+    );
+
+    final value = gasAmount ?? PtonV2.gasConstants.deployWallet;
+
+    return SenderArguments(value: value, to: to, body: body);
   }
 }

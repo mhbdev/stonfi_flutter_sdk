@@ -3,12 +3,24 @@ import 'package:stonfi/contracts/pTON/pton.dart';
 import 'package:stonfi/utils/create_jetton_transfer_message.dart';
 import 'package:tonutils/tonutils.dart';
 
+class PtonGasConstant {
+  final BigInt deployWallet;
+
+  PtonGasConstant({
+    required this.deployWallet,
+  });
+}
+
 class PtonV1 extends Pton {
   static PtonVersion version = PtonVersion.v1;
   static InternalAddress staticAddress =
       InternalAddress.parse("EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez");
+  static PtonGasConstant gasConstants =
+      PtonGasConstant(deployWallet: Nano.fromString('1.05'));
 
-  PtonV1({InternalAddress? address}) : super(address ?? PtonV1.staticAddress) {
+  PtonV1({InternalAddress? address, PtonGasConstant? gasConstants})
+      : super(address ?? PtonV1.staticAddress) {
+    PtonV1.gasConstants = gasConstants ?? PtonV1.gasConstants;
     if (address != null) {
       PtonV1.staticAddress = address;
     }
@@ -53,5 +65,33 @@ class PtonV1 extends Pton {
         forwardPayload: forwardPayload,
         forwardTonAmount: forwardTonAmount);
     return via.send(txParams);
+  }
+
+  Cell createDeployWalletBody(
+      {required InternalAddress ownerAddress,
+      InternalAddress? excessAddress,
+      BigInt? queryId}) {
+    return beginCell()
+        .storeUint(PtonOpCodes.DEPLOY_WALLET_V1.op, 32)
+        .storeUint(queryId ?? BigInt.zero, 64)
+        .storeAddress(ownerAddress)
+        .endCell();
+  }
+
+  Future<SenderArguments> getDeployWalletTxParams(
+      {required InternalAddress ownerAddress,
+      InternalAddress? excessAddress,
+      BigInt? gasAmount,
+      BigInt? queryId}) async {
+    final to = this.address;
+
+    final body = createDeployWalletBody(
+      ownerAddress: ownerAddress,
+      queryId: queryId,
+    );
+
+    final value = gasAmount ?? PtonV1.gasConstants.deployWallet;
+
+    return SenderArguments(value: value, to: to, body: body);
   }
 }
